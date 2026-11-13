@@ -1,0 +1,13 @@
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+# Keep the defaults (pyflakes `F` + pycodestyle `E`), but drop the stylistic
+# rules this codebase uses deliberately:
+#   E402 - imports after `matplotlib.use("Agg")` / `warnings.filterwarnings`,
+#          which must run before the heavy imports.
+#   E701/E702 - compound statements that group tight numeric ops on one line.
+#   E731 - small inline lambdas.
+#   E741 - single-letter math names (l, I) in numeric code.
+# `F` checks (unused imports/variables, etc.) stay active.
+ignore = ["E402", "E701", "E702", "E731", "E741"]

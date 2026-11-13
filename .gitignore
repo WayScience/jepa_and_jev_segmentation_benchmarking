@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# uv
+uv.lock
+
+# Datasets (large, downloaded/prepared separately)
+data/
+
+# Pipeline outputs and artifacts
+out/
+seg_results.json
+probe_results.json
+jev_results.json
+
+# Setup / stamp markers
+setup_stamp
+*.stamp
+
+# Model checkpoints and arrays
+*.pt
+*.pth
+*.npz
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/

@@ -1,0 +1,276 @@
+<title>JEPA + Jev Nuclei Demo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a lab-notebook column; figures break wider; two decision-flow lanes up top. */
+:root {
+  --bg: #f6f8fa; --surface: #ffffff; --fg: #18212b; --muted: #5a6876; --rule: #d9e0e7;
+  --accent: #1f5fbf;            /* DAPI-ish blue */
+  --s-jev: #1f5fbf; --s-naive: #b7791f; --s-rand: #8a96a3;
+  --ok: #2f8f4e; --rv: #c48a10; --rj: #c53a3a;
+  --code-bg: #eef2f6; --hl: #e8f0fb;
+  --f-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f151b; --surface: #161e26; --fg: #e3e9ef; --muted: #96a3b0; --rule: #2a3540;
+  --accent: #6ea8ff; --s-jev: #6ea8ff; --s-naive: #e0a64a; --s-rand: #7c8894;
+  --ok: #58c27c; --rv: #e8b040; --rj: #ef6b6b; --code-bg: #1b252f; --hl: #182a42; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f151b; --surface: #161e26; --fg: #e3e9ef; --muted: #96a3b0; --rule: #2a3540;
+  --accent: #6ea8ff; --s-jev: #6ea8ff; --s-naive: #e0a64a; --s-rand: #7c8894;
+  --ok: #58c27c; --rv: #e8b040; --rj: #ef6b6b; --code-bg: #1b252f; --hl: #182a42; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 17px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 72px; }
+main { max-width: 980px; margin: 0 auto; display: grid; gap: 56px; }
+section { display: grid; gap: 18px; min-width: 0; }
+.prose { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 600; text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.15rem; }
+p { margin: 0; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 1.15rem; color: var(--fg); max-width: 64ch; }
+.muted { color: var(--muted); }
+.mono, code { font-family: var(--f-mono); font-size: 0.86em; }
+a { color: var(--accent); }
+header { display: grid; gap: 14px; }
+
+.findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0; border-top: 2px solid var(--fg); }
+.findings > div { padding: 14px 18px 16px 0; border-bottom: 1px solid var(--rule); display: grid; gap: 4px; align-content: start; min-width: 0; }
+.findings .fig { font-family: var(--f-display); font-size: 1.9rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.findings .fig small { font-size: 0.95rem; color: var(--muted); font-weight: 500; }
+.findings p { font-size: 0.95rem; color: var(--muted); }
+
+/* pipeline lanes */
+.lanes { display: grid; gap: 10px; }
+.lane { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: stretch; }
+.lane-name { font-family: var(--f-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding-top: 10px; }
+.steps { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+.step { background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; padding: 7px 11px; font-size: 0.92rem; }
+.step.key { border-color: var(--accent); }
+.step b { font-weight: 600; }
+.arrow { color: var(--muted); font-family: var(--f-mono); }
+@media (max-width: 560px) { .lane { grid-template-columns: 1fr; } .lane-name { padding-top: 0; } }
+
+/* tables */
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; min-width: 560px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+th { font-family: var(--f-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 500; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--f-mono); font-size: 0.85rem; white-space: nowrap; }
+.sd { color: var(--muted); font-size: 0.85em; margin-left: 2px; }
+tr.hl td { background: var(--hl); }
+
+/* charts */
+.charts { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 760px) { .charts { grid-template-columns: 1fr; } }
+.chart { display: grid; gap: 8px; min-width: 0; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+svg .grid { stroke: var(--rule); stroke-width: 1; }
+svg .diag { stroke: var(--muted); stroke-dasharray: 4 4; stroke-width: 1; }
+svg .tick { fill: var(--muted); font: 11px var(--f-mono); }
+svg .axis { fill: var(--muted); font: 12px var(--f-body); }
+svg .line { fill: none; stroke-width: 2.2; }
+svg .dot { stroke: var(--bg); stroke-width: 1.2; }
+.s-jev { stroke: var(--s-jev); } .dot.s-jev { fill: var(--s-jev); }
+.s-naive { stroke: var(--s-naive); } .dot.s-naive { fill: var(--s-naive); }
+.s-rand { stroke: var(--s-rand); stroke-dasharray: 5 4; } .dot.s-rand { fill: var(--s-rand); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.85rem; color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 16px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
+.lg-jev::before { background: var(--s-jev); } .lg-naive::before { background: var(--s-naive); } .lg-rand::before { background: var(--s-rand); }
+
+/* figures */
+.panel { margin: 0; display: grid; gap: 8px; }
+.panel figcaption { font-size: 0.85rem; color: var(--muted); }
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 700px) { .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.strip > div { display: grid; gap: 4px; min-width: 0; }
+.strip img, .pca img { width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: cover; image-rendering: auto; background: #000; border-radius: 2px; max-width: 100%; }
+.strip span, .pca span { font-size: 0.78rem; color: var(--muted); }
+.pca { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; max-width: 620px; }
+.pca > div { display: grid; gap: 4px; }
+.pca img.px { image-rendering: pixelated; }
+i.k { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 3px 0 6px; vertical-align: baseline; }
+i.k.ok { background: var(--ok); } i.k.rv { background: var(--rv); } i.k.rj { background: var(--rj); }
+
+/* code */
+.codepair { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 760px) { .codepair { grid-template-columns: 1fr; } }
+.codepair > div { display: grid; gap: 6px; min-width: 0; align-content: start; }
+pre { margin: 0; background: var(--code-bg); border-radius: 4px; padding: 12px 14px; overflow-x: auto; font-family: var(--f-mono); font-size: 0.76rem; line-height: 1.5; max-height: 460px; }
+.label { font-family: var(--f-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+
+.bands td:first-child { font-weight: 600; }
+.verdict { display: inline-flex; align-items: center; gap: 6px; }
+.note { border-left: 3px solid var(--rule); padding-left: 14px; color: var(--muted); font-size: 0.95rem; max-width: 68ch; }
+ul.plain { margin: 0; padding-left: 1.1em; display: grid; gap: 8px; max-width: 68ch; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px 40px; }
+.two > div { display: grid; gap: 10px; align-content: start; min-width: 0; }
+footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--rule); padding-top: 16px; }
+</style>
+
+<main>
+<header>
+  <div class="eyebrow">Working demo · public data · CPU only</div>
+  <h1>JEPA + Jev Nuclei Demo</h1>
+  <p class="lede">A small, runnable version of the pipeline we discussed: a JEPA learns image features from unlabeled microscopy, a light head turns them into nucleus masks from a handful of labels, and a Jev-shaped decision layer decides which masks to trust and which to send to a person.</p>
+  <p class="muted prose">Jev itself is in early access and works on text and structured state, not pixels. Here its role is played by a local calibrated model that answers the same request shape (state in, typed questions, probabilities out), so the plumbing is real and the model call is swappable.</p>
+</header>
+
+<section aria-label="Key results">
+  <div class="findings">
+    <div><div class="fig">{{AUROC_J}} <small>vs {{AUROC_N}}</small></div><p>How well the decision layer separates right from wrong masks (AUROC), versus the segmenter's own confidence.</p></div>
+    <div><div class="fig">{{BASE_ACC}} → {{ACC20_J}}</div><p>Instance accuracy after a person fixes the 20% least-trusted masks. Reviewing a random 20% only reaches {{ACC20_R}}.</p></div>
+    <div><div class="fig">{{JF16}} <small>F1</small></div><p>Tiny JEPA + 16 labels. Beats its random-init control ({{RF16}}) slightly; a from-scratch U-Net ({{UF16}}) still wins at this toy scale.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>The pipeline</h2>
+  <div class="lanes">
+    <div class="lane"><div class="lane-name">Pixels · JEPA</div>
+      <div class="steps"><span class="step">447 unlabeled images</span><span class="arrow">→</span><span class="step key"><b>I-JEPA pretraining</b> (predict masked-region embeddings)</span><span class="arrow">→</span><span class="step">frozen features + 16 labeled images</span><span class="arrow">→</span><span class="step">interior / boundary map → watershed → masks</span></div></div>
+    <div class="lane"><div class="lane-name">Decisions · Jev</div>
+      <div class="steps"><span class="step">one structured <b>state</b> per nucleus</span><span class="arrow">→</span><span class="step key"><b>typed questions</b>: error type, verdict, "is this one whole nucleus?"</span><span class="arrow">→</span><span class="step"><i class="k ok"></i>accept <i class="k rv"></i>review <i class="k rj"></i>reject</span></div></div>
+  </div>
+  <p class="prose">The split matters: the vision model does the pixel work, and the decision layer handles the judgment calls that would otherwise be hand-tuned thresholds or a person looking at every cell. Jev's selling points (typed outputs, calibrated probabilities, ~100 ms calls) fit that second job.</p>
+</section>
+
+<section>
+  <h2>Data</h2>
+  <p class="prose">The <a href="https://github.com/stardist/stardist/releases/tag/0.1.0">StarDist subset of the 2018 Data Science Bowl</a>: fluorescence images of stained nuclei from many labs and microscopes, each with an instance mask per nucleus. 447 training images and 50 held-out test images, from 256×256 up to 520×696 px. Sixty training images were set aside as the decision layer's "review history"; few-shot label sets were drawn from the rest. All test numbers below are on the 50 test images (2,460 nuclei).</p>
+</section>
+
+<section>
+  <h2>Stage 1 · JEPA pretraining</h2>
+  <div class="two">
+    <div>
+      <p>A ViT with 8×8 patches (192-dim, 6 layers, ~2.7 M parameters) trained for 1,200 steps (25 min on 2 CPU cores) on random 128-px crops, with no labels. Each step hides four blocks of the image and asks a small predictor to produce what an EMA copy of the encoder sees there.</p>
+      <p>A first attempt collapsed: loss went to zero while features became identical. Adding a variance/covariance penalty on the encoder output, in the spirit of LeJEPA's regularizer, fixed it.</p>
+    </div>
+    <div class="chart">
+      {{LOSS_SVG}}
+      <div class="legend"><span class="lg-jev">prediction loss</span><span class="lg-naive">feature spread (stays near 1 = no collapse)</span></div>
+    </div>
+  </div>
+  <div class="pca">
+    <div><img src="{{PCA_RAW}}" alt="raw test image"><span>Test image</span></div>
+    <div><img class="px" src="{{PCA_JEPA}}" alt="JEPA feature PCA"><span>JEPA features, top 3 PCs</span></div>
+    <div><img class="px" src="{{PCA_RANDOM}}" alt="random feature PCA"><span>Random-init features, top 3 PCs</span></div>
+  </div>
+  <div class="chart">
+    <img src="{{EMBEDDING}}" alt="PCA and UMAP feature embeddings" style="width:100%;max-width:760px">
+    <span class="muted">Each point is a sampled foreground token from eight held-out test images. Color shows Jev confidence, P(ok), for the predicted nucleus at that token. PCA preserves linear variance. UMAP is a nonlinear visualization, not a performance metric.</span>
+  </div>
+  <p class="note">Each map shows the encoder's response to this image minus its response to a blank image, reduced to three colors. The random encoder still tracks local brightness, so nuclei stand out. The tiny JEPA's strongest directions are row and column stripes: it learned to lean on position, a known shortcut when the masked regions can be guessed from where they are. The nucleus information is still there in weaker directions (the linear probe below finds it), but this is the clearest sign the model is undertrained.</p>
+</section>
+
+<section>
+  <h2>Stage 2 · Segmentation with few labels</h2>
+  <p class="prose">Every learned method gets the same labeled images, training budget (400 steps) and post-processing. Mean ± s.d. over three random label draws. A predicted nucleus counts as correct when it overlaps a true nucleus with IoU ≥ 0.5.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Method</th><th>Labeled images</th><th class="num">F1</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">Matched IoU</th></tr></thead>
+    <tbody>{{SEG_TABLE}}</tbody>
+  </table></div>
+  <div class="two">
+    <div>
+      <h3>What the numbers say</h3>
+      <p>JEPA pretraining helps over the same network with random weights at both label budgets ({{JF4}} vs {{RF4}} at 4 labels, {{JF16}} vs {{RF16}} at 16), but the gap is within about one standard deviation. A small U-Net trained from scratch is better than both. That is the expected result for a 25-minute, 2.7 M-parameter JEPA on 447 images: the published gains come from much larger models and datasets.</p>
+    </div>
+    <div>
+      <h3>Features alone</h3>
+      <p>To remove the head's own pixel convolutions from the picture, a linear classifier labelled each 8×8 patch as background, inside or boundary using only frozen tokens (balanced accuracy on test):</p>
+      <div class="tbl"><table style="min-width:0">
+        <thead><tr><th>Encoder</th><th class="num">4 images</th><th class="num">16 images</th></tr></thead>
+        <tbody><tr><td>JEPA</td><td class="num">{{PROBE_J4}}</td><td class="num">{{PROBE_J16}}</td></tr>
+        <tr><td>Random init</td><td class="num">{{PROBE_R4}}</td><td class="num">{{PROBE_R16}}</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Test images and Jev confidence</h2>
+  <p class="muted prose">Held-out test images compare learned, classical, and pretrained segmenters. Jev refinement is applied to JEPA, Otsu, StarDist, and Cellpose candidates. IoU is reported for Hungarian-matched instances at the same 0.5 threshold used in the aggregate table.</p>
+  <p class="note">StarDist and Cellpose use their installed pretrained models when available. When a package is not installed, the pipeline uses a deterministic watershed proxy and records the same Jev refinement path. The report does not treat a proxy as a pretrained-model result.</p>
+  {{PANELS}}
+  <img src="{{IOU_PLOT}}" alt="Per-image IoU comparison" style="width:100%;max-width:760px">
+  <div class="tbl"><table>
+    <thead><tr><th>Image</th><th class="num">JEPA IoU</th><th class="num">Jev-refined IoU</th><th class="num">Random IoU</th><th class="num">U-Net IoU</th><th class="num">JEPA TP / FP / FN</th></tr></thead>
+    <tbody>{{IOU_ROWS}}</tbody>
+  </table></div>
+  <h3>High and low Jev confidence</h3>
+  <p class="muted prose">These examples show the test images with the highest and lowest mean Jev P(ok). Boundary colors show confidence for each predicted nucleus.</p>
+  {{CONFIDENCE_EXAMPLES}}
+</section>
+
+<section>
+  <h2>Stage 3 · The Jev-shaped decision layer</h2>
+  <p class="prose">Each predicted nucleus becomes a structured state: size relative to its neighbours, shape, how many distance-transform peaks it has, how confident the segmenter was inside it and along its edge, intensity and contrast. The request asks three typed questions. The stand-in model was trained on {{N_QC_OBJ}} masks from the 60 held-out "review history" images and then scored on {{N_TEST_OBJ}} masks from the test set, {{ERR_RATE}} of which are wrong ({{MIX_MERGED}} merged, {{MIX_FRAG}} fragments, {{MIX_FP}} false positives, {{MIX_PB}} poor boundaries).</p>
+  <div class="codepair">
+    <div><span class="label">Request · one nucleus</span><pre>{{EX_REQ}}</pre></div>
+    <div><span class="label">Response · a merged pair, correctly rejected</span><pre>{{EX_RESP}}</pre>
+      <span class="label">Response · borderline case, sent to review (truth: {{EX_MID_TRUTH}})</span><pre>{{EX_MID}}</pre></div>
+  </div>
+
+  <div class="charts">
+    <div class="chart">
+      <h3>Where to spend review time</h3>
+      {{TRIAGE_SVG}}
+      <div class="legend"><span class="lg-jev">Decision layer P(ok)</span><span class="lg-naive">Segmenter's own confidence</span><span class="lg-rand">Random order</span></div>
+      <p class="muted" style="font-size:0.92rem">Reviewing the least-trusted 10% of masks lifts accuracy to {{ACC10_J}}; at 20% the reviewer sees {{CAUGHT20}} of all bad masks (random order: {{CAUGHT20_R}}). The segmenter's own probability ranks errors barely better than chance.</p>
+    </div>
+    <div class="chart">
+      <h3>Are the probabilities honest?</h3>
+      {{REL_SVG}}
+      <div class="legend"><span class="lg-jev">Decision layer</span><span class="lg-naive">Segmenter</span></div>
+      <p class="muted" style="font-size:0.92rem">On the diagonal means "80% sure" is right 80% of the time. Calibration error {{ECE_J}} vs {{ECE_N}}; Brier score {{BRIER_J}} vs {{BRIER_N}}.</p>
+    </div>
+  </div>
+
+  <div class="tbl"><table class="bands">
+    <thead><tr><th>Verdict</th><th>Rule on P(ok)</th><th class="num">Masks</th><th class="num">Share</th><th class="num">Actually correct</th></tr></thead>
+    <tbody>
+      <tr><td><span class="verdict"><i class="k ok"></i>Accept</span></td><td>≥ 0.85</td><td class="num">{{ACC_N}}</td><td class="num">{{ACC_F}}</td><td class="num">{{ACC_P}}</td></tr>
+      <tr><td><span class="verdict"><i class="k rv"></i>Review</span></td><td>0.30 – 0.85</td><td class="num">{{REV_N}}</td><td class="num">{{REV_F}}</td><td class="num">{{REV_P}}</td></tr>
+      <tr><td><span class="verdict"><i class="k rj"></i>Reject / re-segment</span></td><td>&lt; 0.30</td><td class="num">{{REJ_N}}</td><td class="num">{{REJ_F}}</td><td class="num">{{REJ_P}}</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">On the wrong masks, the error-type question picks the right category {{ETYPE_ACC}} of the time (n = {{N_WRONG}}), which is useful for routing: merges can go to a split step, false positives can just be dropped.</p>
+  <p class="prose">Yes. This experiment supports Jev as a quality-control layer, not as a replacement for segmentation. Jev P(ok) has AUROC {{AUROC_J}}, compared with {{AUROC_N}} for the segmenter's confidence. The refinement loop tries alternate watershed settings and keeps the setting with the highest mean P(ok). Use this loop as a candidate selector, then validate the selected masks with a reviewer.</p>
+  <p class="note">Simulated review assumes a perfect reviewer who replaces each wrong mask with the true nuclei it touched. Real reviewers are slower and imperfect, so read the curve as the ordering benefit, not a promised accuracy.</p>
+</section>
+
+<section>
+  <h2>Using it for real</h2>
+  <div class="two">
+    <div>
+      <h3>Swapping in Jev</h3>
+      <ul class="plain">
+        <li>Replace <code>LocalStandIn.answer()</code> with a Jev call; <code>build_request()</code> already produces a state plus Choice and Noul questions, the shapes TypeSafe's docs describe. Field names may need adjusting to their SDK.</li>
+        <li>Jev reads text and structured state, so give it the per-nucleus feature record (as here), not raw pixels or embeddings.</li>
+        <li>The stand-in learned from 2,510 labelled examples. Jev would answer from instructions and its own training, so test its calibration on a few hundred of your own reviewed masks before trusting the thresholds.</li>
+        <li>At their stated price and latency, scoring the ~1,800 test masks would be one batch of sub-second calls; check data-handling terms before sending lab or patient data.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Making the JEPA part pull its weight</h3>
+      <ul class="plain">
+        <li>Scale up: a ViT-S/B pretrained for hours on a GPU, on tens of thousands of tiles from your own microscope.</li>
+        <li>Fine-tune the encoder instead of freezing it, and use a decoder with multi-scale skips; 8-px tokens are coarse for small nuclei.</li>
+        <li>Benchmark against DINOv2-style microscopy backbones and Cellpose/StarDist, which are the strong baselines for this exact task.</li>
+        <li>Other public sets to try: the full DSB 2018 release, NuInsSeg (H&amp;E), LIVECell (phase contrast), TissueNet (multiplexed tissue).</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Built Nov 6, 2026 on a 2-core CPU, no GPU. Scripts: <code>jepa_pretrain.py</code>, <code>seg.py</code>, <code>probe.py</code>, <code>jev_layer.py</code>. Data: StarDist DSB2018 subset (BSD-3 / Kaggle DSB terms). The Jev stand-in is not TypeSafe's model.
+</footer>
+</main>
